@@ -28,5 +28,9 @@
             <li>No hay contactos todavía.</li>
         @endforelse
     </ul>
+    <style>
+        nav svg { width: 1rem; height: 1rem; }
+    </style>
+    {{ $contacts->links() }}
 </body>
 </html>
