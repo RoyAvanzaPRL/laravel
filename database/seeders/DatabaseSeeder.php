@@ -2,7 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\Author;
+use App\Models\Book;
+use App\Models\Genre;
+use App\Models\Loan;
+use App\Models\Member;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -10,16 +14,40 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $genres = Genre::factory(12)->create();
+        $authors = Author::factory(20)->create();
+        $members = Member::factory(30)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $books = collect();
+
+        foreach ($authors as $author) {
+            $authorBooks = Book::factory(5)->for($author)->create();
+
+            foreach ($authorBooks as $book) {
+                $book->genres()->attach(
+                    $genres->random(fake()->numberBetween(1, 3))->pluck('id')
+                );
+            }
+
+            $books = $books->merge($authorBooks);
+        }
+
+        // Historial: varios préstamos ya devueltos (pueden repetir libro)
+        Loan::factory(80)
+            ->returned()
+            ->recycle($members)
+            ->recycle($books)
+            ->create();
+
+        // Activos: como máximo uno por libro (libros distintos)
+        foreach ($books->random(40) as $book) {
+            Loan::factory()
+                ->active()
+                ->for($book)
+                ->for($members->random())
+                ->create();
+        }
     }
 }
