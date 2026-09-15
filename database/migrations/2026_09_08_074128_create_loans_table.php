@@ -19,6 +19,8 @@ return new class extends Migration
             $table->timestamp('due_at');
             $table->timestamp('returned_at')->nullable();
             $table->timestamps();
+            $table->index('loaned_at');
+            $table->index('returned_at');
         });
     }
 

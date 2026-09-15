@@ -7,31 +7,24 @@ use App\Http\Requests\Api\StoreAuthorRequest;
 use App\Http\Requests\Api\UpdateAuthorRequest;
 use App\Http\Resources\AuthorResource;
 use App\Models\Author;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\IndexAuthorRequest;
 
 class AuthorController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(IndexAuthorRequest $request)
     {
-        $sort = $request->string('sort', 'name')->toString();
-        $direction = $request->string('direction', 'asc')->toString();
 
-        if (! in_array($sort, ['id', 'name', 'created_at'], true)) {
-            $sort = 'name';
-        }
-
-        if (! in_array($direction, ['asc', 'desc'], true)) {
-            $direction = 'asc';
-        }
+        $sort = $request->validated('sort', 'name');
+        $direction = $request->validated('direction', 'asc');
 
         $authors = Author::query()
             ->orderBy($sort, $direction)
             ->paginate($request->integer('per_page', 15));
-
         return AuthorResource::collection($authors);
+        
     }
 
     /**
