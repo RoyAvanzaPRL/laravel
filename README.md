@@ -7,6 +7,50 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Ticket API — roles & permissions
+
+Authorization uses [spatie/laravel-permission](https://spatie.be/docs/laravel-permission).
+
+### Naming convention
+
+Permissions use a single pattern from day one:
+
+```text
+resource.action
+```
+
+Examples: `tickets.view`, `tickets.assign`, `tickets.close`, `comments.create`, `attachments.create`.
+
+Roles (`customer`, `agent`, `admin`) are only **groups of permissions**. Adding a new role later (e.g. `supervisor`) should be mostly a change in [`database/seeders/RolesAndPermissionsSeeder.php`](database/seeders/RolesAndPermissionsSeeder.php).
+
+### Local setup
+
+```bash
+./vendor/bin/sail artisan migrate:fresh --seed
+```
+
+Demo users (password: `password`):
+
+| Email | Role |
+|---|---|
+| `customer@example.com` | customer |
+| `agent@example.com` | agent |
+| `admin@example.com` | admin |
+
+### Permission cache
+
+Spatie caches permissions. After changing roles/permissions in local (seeders, tinker, DB), clear the cache if checks look “stuck”:
+
+```bash
+./vendor/bin/sail artisan permission:cache-reset
+```
+
+Or in code / tinker:
+
+```php
+app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+```
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
