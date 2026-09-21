@@ -2,34 +2,14 @@
 
 namespace App\Providers;
 
-use App\Models\User;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use App\Repositories\Tickets\EloquentTicketRepository;
+use App\Repositories\Tickets\TicketRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
-    }
-
-    public function boot(): void
-    {
-        Gate::before(function (User $user, string $ability): ?bool {
-            if (! $user->is_active) {
-                return false;
-            }
-
-            if (! $user->hasRole('admin')) {
-                return null;
-            }
-
-            // Admin: solo atajo de visibilidad. Mutaciones → TicketPolicy.
-            if (in_array($ability, ['view', 'viewAny'], true)) {
-                return true;
-            }
-
-            return null;
-        });
+        $this->app->bind(TicketRepository::class, EloquentTicketRepository::class);
     }
 }

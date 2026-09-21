@@ -21,7 +21,9 @@ class AuthController extends Controller
             'password' => $request->validated('password'),
             'is_active' => true,
         ]);
-
+        
+        $user->assignRole('customer');
+        
         $token = $user->createToken('api', ['*'])->plainTextToken;
 
         return response()->json([

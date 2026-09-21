@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
 
 #[Fillable([
@@ -56,6 +57,23 @@ class Ticket extends Model
         return $this->hasMany(Attachment::class);
     }
 
+    /**
+     * Listado: staff (view_any) ve todo; el resto solo lo suyo.
+     *
+     * @param  Builder<Ticket>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        if ($user->can('tickets.view_any')) {
+            return;
+        }
+
+        $query->where(function (Builder $owned) use ($user): void {
+            $owned->where('creator_id', $user->id)
+                ->orWhere('assignee_id', $user->id);
+        });
+    }
+    
     public function transitionTo(TicketStatus $next): void
     {
         if (! $this->status->canTransitionTo($next)) {

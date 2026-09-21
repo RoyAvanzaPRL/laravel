@@ -73,7 +73,8 @@ class TicketPolicyTest extends TestCase
 
         $this->assertFalse($agent->can('assign', $ticket));
         $this->assertFalse($agent->can('comment', $ticket));
-        $this->assertTrue($agent->can('close', $ticket)); // puede reabrir vía modelo
+        $this->assertFalse($agent->can('close', $ticket));
+        $this->assertTrue($agent->can('transition', $ticket));
     }
 
     public function test_customer_can_comment_open_but_not_closed(): void
@@ -102,5 +103,19 @@ class TicketPolicyTest extends TestCase
         $this->assertTrue($admin->can('viewAny', Ticket::class));
         $this->assertFalse($admin->can('comment', $ticket));
         $this->assertFalse($admin->can('update', $ticket));
+    }
+
+    public function test_agent_can_transition_closed_ticket_to_reopen(): void
+    {
+        $customer = User::factory()->create();
+        $customer->assignRole('customer');
+
+        $agent = User::factory()->create();
+        $agent->assignRole('agent');
+
+        $ticket = Ticket::factory()->forCreator($customer)->closed()->create();
+
+        $this->assertFalse($agent->can('close', $ticket));
+        $this->assertTrue($agent->can('transition', $ticket));
     }
 }

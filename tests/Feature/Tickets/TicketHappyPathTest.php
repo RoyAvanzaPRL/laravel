@@ -9,6 +9,7 @@ use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class TicketHappyPathTest extends TestCase
@@ -25,6 +26,7 @@ class TicketHappyPathTest extends TestCase
     public function test_authenticated_happy_path_for_ticket_flow(): void
     {
         Storage::fake('local');
+        Queue::fake();
 
         $customer = User::factory()->create();
         $customer->assignRole('customer');
@@ -90,13 +92,22 @@ class TicketHappyPathTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status', 'resolved');
 
-        $this->assertDatabaseHas('tickets', [
-            'id' => $ticketId,
-            'status' => 'resolved',
-            'assignee_id' => $agent->id,
-        ]);
-
-        $this->assertNotNull(Ticket::query()->find($ticketId)?->resolved_at);
+            $this->assertDatabaseHas('tickets', [
+                'id' => $ticketId,
+                'status' => 'resolved',
+                'assignee_id' => $agent->id,
+            ]);
+            
+            $this->assertNotNull(Ticket::query()->find($ticketId)?->resolved_at);
+            
+            $close = $this->actingAs($agent, 'sanctum')
+                ->postJson('/api/tickets/'.$ticketId.'/close');
+            
+            $close
+                ->assertOk()
+                ->assertJsonPath('data.status', 'closed');
+            
+            $this->assertNotNull(Ticket::query()->find($ticketId)?->closed_at);
     }
 
     public function test_guest_cannot_create_ticket(): void

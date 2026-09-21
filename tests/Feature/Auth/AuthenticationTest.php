@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -12,6 +13,8 @@ class AuthenticationTest extends TestCase
 
     public function test_user_can_register(): void
     {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
         $response = $this->postJson('/api/register', [
             'name' => 'Ada Lovelace',
             'email' => 'ada@example.com',
@@ -30,6 +33,7 @@ class AuthenticationTest extends TestCase
             'email' => 'ada@example.com',
             'is_active' => true,
         ]);
+        $this->assertTrue(User::query()->where('email', 'ada@example.com')->first()->hasRole('customer'));
     }
 
     public function test_user_can_login(): void

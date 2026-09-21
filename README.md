@@ -35,6 +35,7 @@ Demo users (password: `password`):
 |---|---|
 | `customer@example.com` | customer |
 | `agent@example.com` | agent |
+| `supervisor@example.com` | supervisor |
 | `admin@example.com` | admin |
 
 ### Permission cache

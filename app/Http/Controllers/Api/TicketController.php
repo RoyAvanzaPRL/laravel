@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\TicketStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tickets\AssignTicketRequest;
 use App\Http\Requests\Tickets\StoreTicketRequest;
@@ -14,6 +13,11 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use App\Services\Tickets\AssignTicketService;
+use App\Services\Tickets\TransitionTicketService;
+use App\Enums\TicketStatus;
+use App\Http\Requests\Tickets\CloseTicketRequest;
+use App\Services\Tickets\CloseTicketService;
 use InvalidArgumentException;
 
 class TicketController extends Controller
@@ -23,6 +27,7 @@ class TicketController extends Controller
         $this->authorize('viewAny', Ticket::class);
 
         $tickets = Ticket::query()
+            ->visibleTo($request->user())
             ->with(['creator', 'assignee'])
             ->latest('last_activity_at')
             ->paginate(15);
@@ -71,32 +76,51 @@ class TicketController extends Controller
         return new TicketResource($ticket);
     }
 
-    public function assign(AssignTicketRequest $request, Ticket $ticket): TicketResource|JsonResponse
-    {
+    public function assign(
+        AssignTicketRequest $request,
+        Ticket $ticket,
+        AssignTicketService $assignTicket,
+    ): TicketResource|JsonResponse {
         $assignee = User::query()->findOrFail($request->validated('assignee_id'));
-
+    
         try {
-            $ticket->assignTo($assignee);
+            $ticket = $assignTicket->handle($ticket, $assignee);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $ticket->load(['creator', 'assignee']);
-
+    
         return new TicketResource($ticket);
     }
 
-    public function transition(TransitionTicketRequest $request, Ticket $ticket): TicketResource|JsonResponse
-    {
+    public function transition(
+        TransitionTicketRequest $request,
+        Ticket $ticket,
+        TransitionTicketService $transitionTicket,
+        CloseTicketService $closeTicket,
+    ): TicketResource|JsonResponse {
         $next = TicketStatus::from($request->validated('status'));
-
+    
         try {
-            $ticket->transitionTo($next);
+            $ticket = $next === TicketStatus::Closed
+                ? $closeTicket->handle($ticket)
+                : $transitionTicket->handle($ticket, $next);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        $ticket->load(['creator', 'assignee']);
+    
+        return new TicketResource($ticket);
+    }
+    
+    public function close(
+        CloseTicketRequest $request,
+        Ticket $ticket,
+        CloseTicketService $closeTicket,
+    ): TicketResource|JsonResponse {
+        try {
+            $ticket = $closeTicket->handle($ticket);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return new TicketResource($ticket);
     }

@@ -10,7 +10,13 @@ class TransitionTicketRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('close', $this->route('ticket'));
+        $ticket = $this->route('ticket');
+    
+        if ($this->input('status') === TicketStatus::Closed->value) {
+            return $this->user()->can('close', $ticket);
+        }
+    
+        return $this->user()->can('transition', $ticket);
     }
 
     /**

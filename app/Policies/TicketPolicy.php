@@ -48,10 +48,23 @@ class TicketPolicy
     }
 
     /**
-     * Cambiar estado (close / reopen / in_progress / resolved…).
-     * La validez de la transición concreta la sigue imponiendo el modelo.
+     * Cerrar. Un ticket ya Closed no se “cierra” otra vez.
+     * Reopen (Closed → Open) va por transition().
      */
     public function close(User $user, Ticket $ticket): bool
+    {
+        if ($ticket->status === TicketStatus::Closed) {
+            return false;
+        }
+        return $user->is_active
+            && $user->can('tickets.close')
+            && $this->view($user, $ticket);
+    }
+    /**
+     * Cambiar estado que no es close (in_progress, resolved, reopen…).
+     * La validez de la transición concreta la sigue imponiendo el modelo.
+     */
+    public function transition(User $user, Ticket $ticket): bool
     {
         return $user->is_active
             && $user->can('tickets.close')
@@ -69,6 +82,13 @@ class TicketPolicy
             && $this->view($user, $ticket);
     }
 
+    public function attach(User $user, Ticket $ticket): bool
+    {
+        return $user->is_active
+            && $user->can('attachments.create')
+            && $this->comment($user, $ticket);
+    }
+
     /**
      * Propiedad o staff (staff = quien puede asignar; no usamos hasRole).
      */
@@ -78,5 +98,10 @@ class TicketPolicy
             return true;
         }
         return $user->can('tickets.view_any');
+    }
+
+    public function downloadHistory(User $user, Ticket $ticket): bool
+    {
+        return $this->view($user, $ticket);
     }
 }

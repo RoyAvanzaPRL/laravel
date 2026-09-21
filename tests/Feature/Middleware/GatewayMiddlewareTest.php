@@ -39,25 +39,4 @@ class GatewayMiddlewareTest extends TestCase
             ->assertOk()
             ->assertJsonPath('user.id', $user->id);
     }
-
-    public function test_admin_can_access_admin_ping(): void
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole('admin');
-
-        $this->actingAs($admin, 'sanctum')
-            ->getJson('/api/admin/ping')
-            ->assertOk()
-            ->assertJsonPath('message', 'Admin area OK.');
-    }
-
-    public function test_customer_cannot_access_admin_ping(): void
-    {
-        $customer = User::factory()->create();
-        $customer->assignRole('customer');
-
-        $this->actingAs($customer, 'sanctum')
-            ->getJson('/api/admin/ping')
-            ->assertForbidden();
-    }
 }

@@ -8,7 +8,17 @@ class StoreCommentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('comment', $this->route('ticket'));
+        $ticket = $this->route('ticket');
+    
+        if (! $this->user()->can('comment', $ticket)) {
+            return false;
+        }
+    
+        if ($this->hasFile('attachment')) {
+            return $this->user()->can('attach', $ticket);
+        }
+    
+        return true;
     }
 
     /**
