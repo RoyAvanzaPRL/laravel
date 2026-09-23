@@ -2,59 +2,47 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\Auth\InactiveAccountException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Models\User;
+use App\Services\Auth\LoginUserService;
+use App\Services\Auth\RegisterUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request): JsonResponse
+    public function register(RegisterRequest $request, RegisterUserService $registerUser): JsonResponse
     {
-        $user = User::query()->create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'password' => $request->validated('password'),
-            'is_active' => true,
-        ]);
-        
-        $user->assignRole('customer');
-        
-        $token = $user->createToken('api', ['*'])->plainTextToken;
+        $result = $registerUser->handle(
+            $request->validated('name'),
+            $request->validated('email'),
+            $request->validated('password'),
+        );
 
         return response()->json([
-            'token' => $token,
-            'user' => $user,
+            'token' => $result->token,
+            'user' => $result->user,
         ], 201);
     }
 
-    public function login(LoginRequest $request): JsonResponse
+    public function login(LoginRequest $request, LoginUserService $loginUser): JsonResponse
     {
-        $user = User::query()
-            ->where('email', $request->validated('email'))
-            ->first();
-
-        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        if (! $user->is_active) {
+        try {
+            $result = $loginUser->handle(
+                $request->validated('email'),
+                $request->validated('password'),
+            );
+        } catch (InactiveAccountException $e) {
             return response()->json([
-                'message' => 'This account is inactive.',
+                'message' => $e->getMessage(),
             ], 403);
         }
 
-        $token = $user->createToken('api', ['*'])->plainTextToken;
-
         return response()->json([
-            'token' => $token,
-            'user' => $user,
+            'token' => $result->token,
+            'user' => $result->user,
         ]);
     }
 

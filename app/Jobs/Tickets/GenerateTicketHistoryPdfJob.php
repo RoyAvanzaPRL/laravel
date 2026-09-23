@@ -2,8 +2,8 @@
 
 namespace App\Jobs\Tickets;
 
-use App\Models\Ticket;
 use App\Notifications\Tickets\TicketHistoryPdfReadyNotification;
+use App\Repositories\Tickets\TicketRepository;
 use App\Services\Tickets\TicketHistoryPdfService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -16,11 +16,9 @@ class GenerateTicketHistoryPdfJob implements ShouldQueue
         public int $ticketId,
     ) {}
 
-    public function handle(TicketHistoryPdfService $pdfs): void
+    public function handle(TicketHistoryPdfService $pdfs, TicketRepository $tickets): void
     {
-        $ticket = Ticket::query()
-            ->with(['creator', 'comments.user'])
-            ->find($this->ticketId);
+        $ticket = $tickets->findByIdWith($this->ticketId, ['creator', 'comments.user']);
 
         if ($ticket === null || $ticket->creator === null) {
             return;

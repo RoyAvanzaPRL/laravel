@@ -66,8 +66,8 @@ class TicketSideEffectsTest extends TestCase
 
         $job = new SendTicketAssignedMailJob($ticket->id);
 
-        $job->handle();
-        $job->handle();
+        $this->app->call([$job, 'handle']);
+        $this->app->call([$job, 'handle']);
 
         Mail::assertSent(TicketAssignedMail::class, 1);
     }
@@ -103,8 +103,8 @@ class TicketSideEffectsTest extends TestCase
 
         $job = new SendTicketResolvedMailJob($ticket->id);
 
-        $job->handle();
-        $job->handle();
+        $this->app->call([$job, 'handle']);
+        $this->app->call([$job, 'handle']);
 
         Mail::assertSent(TicketResolvedMail::class, 1);
     }
@@ -129,8 +129,8 @@ class TicketSideEffectsTest extends TestCase
 
         $job = new GenerateTicketHistoryPdfJob($ticket->id);
 
-        $job->handle();
-        $job->handle();
+        $this->app->call([$job, 'handle']);
+        $this->app->call([$job, 'handle']);
 
         Storage::disk('local')->assertExists("ticket-histories/{$ticket->id}.pdf");
         Notification::assertSentTo($customer, TicketHistoryPdfReadyNotification::class, 1);

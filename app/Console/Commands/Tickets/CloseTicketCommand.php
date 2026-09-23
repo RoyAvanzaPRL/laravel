@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands\Tickets;
 
-use App\Models\Ticket;
+use App\Repositories\Tickets\TicketRepository;
 use App\Services\Tickets\CloseTicketService;
 use Illuminate\Console\Command;
 use InvalidArgumentException;
@@ -13,9 +13,9 @@ class CloseTicketCommand extends Command
 
     protected $description = 'Close a ticket using CloseTicketService (no HTTP)';
 
-    public function handle(CloseTicketService $closeTicket): int
+    public function handle(CloseTicketService $closeTicket, TicketRepository $tickets): int
     {
-        $ticket = Ticket::query()->findOrFail($this->argument('ticket'));
+        $ticket = $tickets->findByIdOrFail((int) $this->argument('ticket'));
 
         try {
             $ticket = $closeTicket->handle($ticket);

@@ -3,7 +3,7 @@
 namespace App\Jobs\Tickets;
 
 use App\Mail\Tickets\TicketAssignedMail;
-use App\Models\Ticket;
+use App\Repositories\Tickets\TicketRepository;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
@@ -17,9 +17,9 @@ class SendTicketAssignedMailJob implements ShouldQueue
         public int $ticketId,
     ) {}
 
-    public function handle(): void
+    public function handle(TicketRepository $tickets): void
     {
-        $ticket = Ticket::query()->with('assignee')->find($this->ticketId);
+        $ticket = $tickets->findByIdWith($this->ticketId, ['assignee']);
 
         if ($ticket === null || $ticket->assignee === null) {
             return;
