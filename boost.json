@@ -11,9 +11,7 @@
     "sail": false,
     "skills": [
         "infer-conventions",
-        "deploying-to-cloud",
         "laravel-best-practices",
-        "testing-best-practices",
-        "tailwindcss-development"
+        "testing-best-practices"
     ]
 }

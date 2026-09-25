@@ -27,3 +27,7 @@ Homestead.yaml
 Thumbs.db
 .agents/
 /.claude/
+.mcp.json
+opencode.json
+CLAUDE.md
+AGENTS.md
